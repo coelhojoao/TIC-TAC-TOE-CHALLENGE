@@ -23,17 +23,16 @@
         .tela { display: none; flex-direction: column; align-items: center; width: 100%; }
         .ativa { display: flex; }
 
-        /* --- TÍTULO REESTRUTURADO --- */
         .header-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 50px; /* Um pouco mais de espaço para os botões */
+            margin-bottom: 50px;
         }
 
         .arco-container {
             position: relative;
-            width: 320px; /* Leve aumento para comportar o espaçamento */
+            width: 320px;
             height: 90px;
             display: flex;
             justify-content: center;
@@ -41,11 +40,11 @@
 
         .letra-curva {
             position: absolute;
-            font-size: 2.1rem; /* Leve aumento na fonte */
+            font-size: 2.1rem;
             font-weight: 900;
             color: var(--ios-blue);
             transform-origin: bottom center;
-            height: 120px; /* Ajuste no raio para acompanhar o espaçamento */
+            height: 120px;
             bottom: 0;
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
@@ -54,11 +53,10 @@
             font-size: 1.4rem;
             font-weight: 700;
             color: #48484a;
-            letter-spacing: 6px; /* Aumentado para combinar com o arco */
+            letter-spacing: 6px;
             margin-top: 15px;
             text-transform: uppercase;
         }
-        /* ------------------------ */
 
         .menu button {
             width: 280px; margin: 8px; padding: 18px;
@@ -108,7 +106,6 @@
             <div class="arco-container" id="titulo-arqueado"></div>
             <div class="sub-titulo">CHALLENGE</div>
         </div>
-        
         <button onclick="escolherEstilo('tradicional')">Modo Tradicional</button>
         <button class="btn-infinito" onclick="escolherEstilo('infinito')">Modo Infinito ♾</button>
     </div>
@@ -129,15 +126,15 @@
         </div>
         <p id="status"></p>
         <div class="tabuleiro" id="tabuleiro">
-            <div class="casa" onclick="jogarNoIndice(0)"></div>
-            <div class="casa" onclick="jogarNoIndice(1)"></div>
-            <div class="casa" onclick="jogarNoIndice(2)"></div>
-            <div class="casa" onclick="jogarNoIndice(3)"></div>
-            <div class="casa" onclick="jogarNoIndice(4)"></div>
-            <div class="casa" onclick="jogarNoIndice(5)"></div>
-            <div class="casa" onclick="jogarNoIndice(6)"></div>
-            <div class="casa" onclick="jogarNoIndice(7)"></div>
-            <div class="casa" onclick="jogarNoIndice(8)"></div>
+            <div class="casa" onclick="cliqueJogador(0)"></div>
+            <div class="casa" onclick="cliqueJogador(1)"></div>
+            <div class="casa" onclick="cliqueJogador(2)"></div>
+            <div class="casa" onclick="cliqueJogador(3)"></div>
+            <div class="casa" onclick="cliqueJogador(4)"></div>
+            <div class="casa" onclick="cliqueJogador(5)"></div>
+            <div class="casa" onclick="cliqueJogador(6)"></div>
+            <div class="casa" onclick="cliqueJogador(7)"></div>
+            <div class="casa" onclick="cliqueJogador(8)"></div>
         </div>
         <div class="acoes">
             <button id="btn-novo-jogo" class="controle btn-reiniciar" onclick="reiniciar()">Novo Jogo</button>
@@ -149,11 +146,10 @@
         function gerarTituloArqueado() {
             const container = document.getElementById('titulo-arqueado');
             const texto = "TIC-TAC-TOE";
-            const anguloTotal = 110; // Aumentado de 90 para 110 para separar as letras
+            const anguloTotal = 110;
             const caracteres = texto.split("");
             const meio = (caracteres.length - 1) / 2;
             const passo = anguloTotal / (caracteres.length - 1);
-
             caracteres.forEach((char, i) => {
                 const span = document.createElement('span');
                 span.innerText = char;
@@ -189,46 +185,26 @@
 
         function iniciarJogo(oponente) {
             modoOponente = oponente;
-            const labelX = document.getElementById("label-x");
-            const labelO = document.getElementById("label-o");
-            
-            if (oponente.startsWith('ia')) {
-                labelX.innerText = "VOCÊ (X)";
-                labelO.innerText = "CPU (O)";
-            } else {
-                labelX.innerText = "JOGADOR 1 (X)";
-                labelO.innerText = "JOGADOR 2 (O)";
-            }
-
+            const lx = document.getElementById("label-x");
+            const lo = document.getElementById("label-o");
+            if (oponente.startsWith('ia')) { lx.innerText = "VOCÊ (X)"; lo.innerText = "CPU (O)"; }
+            else { lx.innerText = "JOGADOR 1 (X)"; lo.innerText = "JOGADOR 2 (O)"; }
             document.getElementById("coluna-velha").style.display = (estiloGlobal === 'infinito') ? "none" : "block";
             mudarTela("tela-oponente", "tela-jogo");
             reiniciar();
         }
 
-        function jogarNoIndice(i) {
-            if (estadoJogo[i] !== "" || !jogoAtivo) return;
-
-            let simbolo = turnoX ? "X" : "O";
-            processarRodada(i, simbolo);
+        function cliqueJogador(i) {
+            if (!jogoAtivo || estadoJogo[i] !== "") return;
+            // Bloqueia clique se for a vez da IA
+            if (modoOponente.startsWith('ia') && !turnoX) return;
             
-            if (!jogoAtivo) return;
-
-            turnoX = !turnoX;
-
-            if (modoOponente === 'amigo') {
-                document.getElementById("status").innerText = `Vez do: ${turnoX ? "Jogador 1 (X)" : "Jogador 2 (O)"}`;
-            } else {
-                if (!turnoX) {
-                    jogoAtivo = false;
-                    document.getElementById("status").innerText = "IA pensando...";
-                    setTimeout(iaExecutar, 600);
-                } else {
-                    document.getElementById("status").innerText = "Sua vez (X)";
-                }
-            }
+            executarJogada(i);
         }
 
-        function processarRodada(i, simbolo) {
+        function executarJogada(i) {
+            let simbolo = turnoX ? "X" : "O";
+            
             if (estiloGlobal === 'infinito') {
                 let fila = (simbolo === "X") ? filaX : filaO;
                 if (fila.length === 3) {
@@ -242,6 +218,7 @@
                 casasElements[i].innerText = simbolo;
                 casasElements[i].style.color = simbolo === "X" ? "var(--ios-blue)" : "var(--ios-red)";
                 
+                // Atualiza opacidade das peças que vão sumir
                 casasElements.forEach(c => c.style.opacity = "1");
                 if (filaX.length === 3) casasElements[filaX[0]].style.opacity = "0.3";
                 if (filaO.length === 3) casasElements[filaO[0]].style.opacity = "0.3";
@@ -250,36 +227,77 @@
                 casasElements[i].innerText = simbolo;
                 casasElements[i].style.color = simbolo === "X" ? "var(--ios-blue)" : "var(--ios-red)";
             }
-            verificarFim();
+
+            if (verificarVitoria()) return;
+            if (verificarEmpate()) return;
+
+            turnoX = !turnoX;
+            atualizarStatus();
+
+            if (!turnoX && modoOponente.startsWith('ia')) {
+                setTimeout(iaPensar, 600);
+            }
         }
 
-        function iaExecutar() {
+        function iaPensar() {
+            if (!jogoAtivo) return;
             let escolha;
-            if (modoOponente === 'ia-god') {
-                escolha = calcularMelhorJogada();
-            } else {
-                let livres = estadoJogo.map((v, i) => v === "" ? i : null).filter(v => v !== null);
-                escolha = livres[Math.floor(Math.random() * livres.length)];
-            }
             
-            if (escolha !== undefined) {
-                processarRodada(escolha, "O");
-                if (jogoAtivo) {
-                    turnoX = true; 
-                    document.getElementById("status").innerText = "Sua vez (X)";
+            if (modoOponente === 'ia-facil') {
+                let disponiveis = estadoJogo.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+                escolha = disponiveis[Math.floor(Math.random() * disponiveis.length)];
+            } else {
+                // IA Imbatível
+                if (estiloGlobal === 'tradicional') {
+                    escolha = minimax(estadoJogo, "O").index;
+                } else {
+                    escolha = melhorJogadaInfinito();
                 }
             }
+            
+            if (escolha !== undefined) executarJogada(escolha);
         }
 
-        function calcularMelhorJogada() {
-            if (estiloGlobal === 'tradicional') return minimax(estadoJogo, "O").index;
-            return heuristicaInfinito();
+        function melhorJogadaInfinito() {
+            // No modo infinito, a IA simula o tabuleiro removendo a peça que vai expirar
+            function simular(tab, filaO_sim, filaX_sim, simbolo) {
+                let novoTab = [...tab];
+                let fX = [...filaX_sim], fO = [...filaO_sim];
+                let f = simbolo === "X" ? fX : fO;
+                if (f.length === 3) { novoTab[f[0]] = ""; }
+                return novoTab;
+            }
+
+            // 1. Tentar ganhar na próxima
+            for (let i = 0; i < 9; i++) {
+                if (estadoJogo[i] === "") {
+                    let s = simular(estadoJogo, filaO, filaX, "O");
+                    s[i] = "O";
+                    if (checarVitoriaSimples(s, "O")) return i;
+                }
+            }
+
+            // 2. Bloquear vitória iminente do jogador
+            for (let i = 0; i < 9; i++) {
+                if (estadoJogo[i] === "") {
+                    let s = simular(estadoJogo, filaO, filaX, "X");
+                    s[i] = "X";
+                    if (checarVitoriaSimples(s, "X")) return i;
+                }
+            }
+
+            // 3. Meio, Cantos, Aleatório
+            if (estadoJogo[4] === "") return 4;
+            let cantos = [0, 2, 6, 8].filter(c => estadoJogo[c] === "");
+            if (cantos.length > 0) return cantos[Math.floor(Math.random() * cantos.length)];
+            
+            return estadoJogo.map((v, i) => v === "" ? i : null).filter(v => v !== null)[0];
         }
 
         function minimax(tab, player) {
             let livres = tab.map((v, i) => v === "" ? i : null).filter(v => v !== null);
-            if (checarVitoria(tab, "X")) return {score: -10};
-            if (checarVitoria(tab, "O")) return {score: 10};
+            if (checarVitoriaSimples(tab, "X")) return {score: -10};
+            if (checarVitoriaSimples(tab, "O")) return {score: 10};
             if (livres.length === 0) return {score: 0};
 
             let jogadas = [];
@@ -294,48 +312,59 @@
             let melhor;
             if (player === "O") {
                 let melhorScore = -Infinity;
-                jogadas.forEach((j, i) => { if (j.score > melhorScore) { melhorScore = j.score; melhor = i; } });
+                for (let i = 0; i < jogadas.length; i++) {
+                    if (jogadas[i].score > melhorScore) { melhorScore = jogadas[i].score; melhor = i; }
+                }
             } else {
                 let melhorScore = Infinity;
-                jogadas.forEach((j, i) => { if (j.score < melhorScore) { melhorScore = j.score; melhor = i; } });
+                for (let i = 0; i < jogadas.length; i++) {
+                    if (jogadas[i].score < melhorScore) { melhorScore = jogadas[i].score; melhor = i; }
+                }
             }
             return jogadas[melhor];
         }
 
-        function heuristicaInfinito() {
-            let futO = [...estadoJogo]; if (filaO.length === 3) futO[filaO[0]] = "";
-            for (let i = 0; i < 9; i++) if (futO[i] === "") { futO[i] = "O"; if (checarVitoria(futO, "O")) return i; futO[i] = ""; }
-            let futX = [...estadoJogo]; if (filaX.length === 3) futX[filaX[0]] = "";
-            for (let i = 0; i < 9; i++) if (futX[i] === "") { futX[i] = "X"; if (checarVitoria(futX, "X")) return i; futX[i] = ""; }
-            if (estadoJogo[4] === "") return 4;
-            let cantos = [0, 2, 6, 8].filter(c => estadoJogo[c] === "");
-            return cantos.length > 0 ? cantos[0] : estadoJogo.indexOf("");
-        }
-
-        function checarVitoria(tab, p) {
+        function checarVitoriaSimples(tab, p) {
             return vitoriaTab.some(c => tab[c[0]] === p && tab[c[1]] === p && tab[c[2]] === p);
         }
 
-        function verificarFim() {
-            let venceu = "";
-            if (checarVitoria(estadoJogo, "X")) venceu = "X";
-            else if (checarVitoria(estadoJogo, "O")) venceu = "O";
+        function verificarVitoria() {
+            let simbolo = turnoX ? "X" : "O";
+            if (checarVitoriaSimples(estadoJogo, simbolo)) {
+                jogoAtivo = false;
+                let nome = "";
+                if (modoOponente === 'amigo') nome = turnoX ? "Jogador 1" : "Jogador 2";
+                else nome = turnoX ? "Você" : "CPU";
+                
+                document.getElementById("status").innerText = `Vitória de ${nome}! 🎉`;
+                if (turnoX) vitoriasX++; else vitoriasO++;
+                finalizarRodada();
+                return true;
+            }
+            return false;
+        }
 
-            if (venceu !== "") {
-                const lX = document.getElementById("label-x").innerText.split(" (")[0];
-                const lO = document.getElementById("label-o").innerText.split(" (")[0];
-                document.getElementById("status").innerText = `Vitória do ${venceu === "X" ? lX : lO}! 🎉`;
-                if (venceu === "X") vitoriasX++; else vitoriasO++;
-                finalizar();
-            } else if (!estadoJogo.includes("") && estiloGlobal === 'tradicional') {
+        function verificarEmpate() {
+            if (estiloGlobal === 'tradicional' && !estadoJogo.includes("")) {
+                jogoAtivo = false;
                 document.getElementById("status").innerText = "Empate! 🤝";
                 empates++;
-                finalizar();
+                finalizarRodada();
+                return true;
+            }
+            return false;
+        }
+
+        function atualizarStatus() {
+            if (!jogoAtivo) return;
+            if (modoOponente === 'amigo') {
+                document.getElementById("status").innerText = `Vez do: ${turnoX ? "Jogador 1 (X)" : "Jogador 2 (O)"}`;
+            } else {
+                document.getElementById("status").innerText = turnoX ? "Sua vez (X)" : "IA pensando...";
             }
         }
 
-        function finalizar() {
-            jogoAtivo = false;
+        function finalizarRodada() {
             document.getElementById("score-x-val").innerText = vitoriasX;
             document.getElementById("score-o-val").innerText = vitoriasO;
             document.getElementById("score-velha").innerText = empates;
@@ -345,21 +374,20 @@
         function reiniciar() {
             estadoJogo = ["", "", "", "", "", "", "", "", ""];
             filaX = []; filaO = [];
+            jogoAtivo = true;
             document.getElementById("btn-novo-jogo").style.display = "none";
             casasElements.forEach(c => { c.innerText = ""; c.style.opacity = "1"; });
             
-            turnoX = Math.random() < 0.5; 
-            jogoAtivo = true;
-
+            // Sorteio inicial
+            turnoX = Math.random() < 0.5;
             if (modoOponente === 'amigo') {
                 document.getElementById("status").innerText = `Sorteio: Começa o ${turnoX ? "Jogador 1" : "Jogador 2"}`;
             } else {
                 if (!turnoX) {
-                    jogoAtivo = false;
                     document.getElementById("status").innerText = "Sorteio: CPU começa...";
-                    setTimeout(iaExecutar, 800);
+                    setTimeout(iaPensar, 800);
                 } else {
-                    document.getElementById("status").innerText = "Sorteio: Você começa! (X)";
+                    document.getElementById("status").innerText = "Sorteio: Você começa!";
                 }
             }
         }
