@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tic Tac Toe Challenge</title>
+    <style>
+        :root {
+            --ios-blue: #007AFF;
+            --ios-red: #FF3B30;
+            --ios-green: #34C759;
+            --ios-purple: #5856D6;
+            --ios-gray: #8e8e93;
+            --ios-bg: #f0f0f7;
+        }
+
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; background-color: var(--ios-bg); overflow: hidden;
+        }
+        
+        .tela { display: none; flex-direction: column; align-items: center; width: 100%; }
+        .ativa { display: flex; }
+
+        /* --- TÍTULO REESTRUTURADO --- */
+        .header-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 50px; /* Um pouco mais de espaço para os botões */
+        }
+
+        .arco-container {
+            position: relative;
+            width: 320px; /* Leve aumento para comportar o espaçamento */
+            height: 90px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .letra-curva {
+            position: absolute;
+            font-size: 2.1rem; /* Leve aumento na fonte */
+            font-weight: 900;
+            color: var(--ios-blue);
+            transform-origin: bottom center;
+            height: 120px; /* Ajuste no raio para acompanhar o espaçamento */
+            bottom: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .sub-titulo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #48484a;
+            letter-spacing: 6px; /* Aumentado para combinar com o arco */
+            margin-top: 15px;
+            text-transform: uppercase;
+        }
+        /* ------------------------ */
+
+        .menu button {
+            width: 280px; margin: 8px; padding: 18px;
+            font-size: 1.1rem; border: none; border-radius: 16px;
+            background: var(--ios-blue); color: white; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-weight: 600;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-infinito { background: #FF9500 !important; }
+        .btn-imbativel { background: var(--ios-purple) !important; }
+
+        .placar {
+            display: flex; justify-content: space-around; width: 330px;
+            background: #fff; padding: 15px 5px; border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; 
+            text-align: center;
+        }
+        .pontos { flex: 1; }
+        .pontos span { font-size: 0.65rem; color: var(--ios-gray); text-transform: uppercase; font-weight: bold; display: block; min-height: 14px;}
+        .pontos b { font-size: 1.6rem; display: block; margin-top: 5px; color: #333; }
+        #score-x-val { color: var(--ios-blue); }
+        #score-o-val { color: var(--ios-red); }
+
+        .tabuleiro { 
+            display: grid; grid-template-columns: repeat(3, 95px); 
+            grid-template-rows: repeat(3, 95px); gap: 12px; 
+        }
+        .casa { 
+            width: 95px; height: 95px; background: #fff; border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; 
+            align-items: center; justify-content: center; font-size: 2.8rem; 
+            font-weight: bold; transition: opacity 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #status { margin: 15px 0; font-size: 1.1rem; font-weight: 600; color: #333; min-height: 1.5em; }
+        .acoes { display: flex; gap: 12px; margin-top: 10px; }
+        button.controle { padding: 14px 24px; font-size: 1rem; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; }
+        .btn-reiniciar { background: var(--ios-green); color: white; display: none; }
+        .btn-voltar { background: var(--ios-gray); color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="tela-inicial" class="tela ativa menu">
+        <div class="header-container">
+            <div class="arco-container" id="titulo-arqueado"></div>
+            <div class="sub-titulo">CHALLENGE</div>
+        </div>
+        
+        <button onclick="escolherEstilo('tradicional')">Modo Tradicional</button>
+        <button class="btn-infinito" onclick="escolherEstilo('infinito')">Modo Infinito ♾</button>
+    </div>
+
+    <div id="tela-oponente" class="tela menu">
+        <h2 id="txt-estilo"></h2>
+        <button onclick="iniciarJogo('amigo')">🆚 Contra Amigo</button>
+        <button onclick="iniciarJogo('ia-facil')">🤖 Máquina (Fácil)</button>
+        <button class="btn-imbativel" onclick="iniciarJogo('ia-god')">🧠 Máquina (Imbatível)</button>
+        <button class="btn-voltar" onclick="mudarTela('tela-oponente', 'tela-inicial')">⬅ Voltar</button>
+    </div>
+
+    <div id="tela-jogo" class="tela">
+        <div class="placar">
+            <div class="pontos"><span id="label-x">Jogador 1</span><b id="score-x-val">0</b></div>
+            <div class="pontos" id="coluna-velha"><span>Velha</span><b id="score-velha">0</b></div>
+            <div class="pontos"><span id="label-o">Jogador 2</span><b id="score-o-val">0</b></div>
+        </div>
+        <p id="status"></p>
+        <div class="tabuleiro" id="tabuleiro">
+            <div class="casa" onclick="jogarNoIndice(0)"></div>
+            <div class="casa" onclick="jogarNoIndice(1)"></div>
+            <div class="casa" onclick="jogarNoIndice(2)"></div>
+            <div class="casa" onclick="jogarNoIndice(3)"></div>
+            <div class="casa" onclick="jogarNoIndice(4)"></div>
+            <div class="casa" onclick="jogarNoIndice(5)"></div>
+            <div class="casa" onclick="jogarNoIndice(6)"></div>
+            <div class="casa" onclick="jogarNoIndice(7)"></div>
+            <div class="casa" onclick="jogarNoIndice(8)"></div>
+        </div>
+        <div class="acoes">
+            <button id="btn-novo-jogo" class="controle btn-reiniciar" onclick="reiniciar()">Novo Jogo</button>
+            <button class="controle btn-voltar" onclick="voltarAoMenu()">Menu</button>
+        </div>
+    </div>
+
+    <script>
+        function gerarTituloArqueado() {
+            const container = document.getElementById('titulo-arqueado');
+            const texto = "TIC-TAC-TOE";
+            const anguloTotal = 110; // Aumentado de 90 para 110 para separar as letras
+            const caracteres = texto.split("");
+            const meio = (caracteres.length - 1) / 2;
+            const passo = anguloTotal / (caracteres.length - 1);
+
+            caracteres.forEach((char, i) => {
+                const span = document.createElement('span');
+                span.innerText = char;
+                span.className = 'letra-curva';
+                const rotaca = (i - meio) * passo;
+                span.style.transform = `rotate(${rotaca}deg)`;
+                container.appendChild(span);
+            });
+        }
+        gerarTituloArqueado();
+
+        let estiloGlobal = '';
+        let modoOponente = '';
+        let turnoX = true;
+        let jogoAtivo = true;
+        let estadoJogo = ["", "", "", "", "", "", "", "", ""];
+        let vitoriasX = 0, vitoriasO = 0, empates = 0;
+        let filaX = [], filaO = [];
+
+        const casasElements = document.querySelectorAll(".casa");
+        const vitoriaTab = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+        function mudarTela(saindo, entrando) {
+            document.getElementById(saindo).classList.remove("ativa");
+            document.getElementById(entrando).classList.add("ativa");
+        }
+
+        function escolherEstilo(estilo) {
+            estiloGlobal = estilo;
+            document.getElementById("txt-estilo").innerText = estilo === 'infinito' ? "♾ Infinito" : "⏹ Tradicional";
+            mudarTela("tela-inicial", "tela-oponente");
+        }
+
+        function iniciarJogo(oponente) {
+            modoOponente = oponente;
+            const labelX = document.getElementById("label-x");
+            const labelO = document.getElementById("label-o");
+            
+            if (oponente.startsWith('ia')) {
+                labelX.innerText = "VOCÊ (X)";
+                labelO.innerText = "CPU (O)";
+            } else {
+                labelX.innerText = "JOGADOR 1 (X)";
+                labelO.innerText = "JOGADOR 2 (O)";
+            }
+
+            document.getElementById("coluna-velha").style.display = (estiloGlobal === 'infinito') ? "none" : "block";
+            mudarTela("tela-oponente", "tela-jogo");
+            reiniciar();
+        }
+
+        function jogarNoIndice(i) {
+            if (estadoJogo[i] !== "" || !jogoAtivo) return;
+
+            let simbolo = turnoX ? "X" : "O";
+            processarRodada(i, simbolo);
+            
+            if (!jogoAtivo) return;
+
+            turnoX = !turnoX;
+
+            if (modoOponente === 'amigo') {
+                document.getElementById("status").innerText = `Vez do: ${turnoX ? "Jogador 1 (X)" : "Jogador 2 (O)"}`;
+            } else {
+                if (!turnoX) {
+                    jogoAtivo = false;
+                    document.getElementById("status").innerText = "IA pensando...";
+                    setTimeout(iaExecutar, 600);
+                } else {
+                    document.getElementById("status").innerText = "Sua vez (X)";
+                }
+            }
+        }
+
+        function processarRodada(i, simbolo) {
+            if (estiloGlobal === 'infinito') {
+                let fila = (simbolo === "X") ? filaX : filaO;
+                if (fila.length === 3) {
+                    let antigo = fila.shift();
+                    estadoJogo[antigo] = "";
+                    casasElements[antigo].innerText = "";
+                    casasElements[antigo].style.opacity = "1";
+                }
+                fila.push(i);
+                estadoJogo[i] = simbolo;
+                casasElements[i].innerText = simbolo;
+                casasElements[i].style.color = simbolo === "X" ? "var(--ios-blue)" : "var(--ios-red)";
+                
+                casasElements.forEach(c => c.style.opacity = "1");
+                if (filaX.length === 3) casasElements[filaX[0]].style.opacity = "0.3";
+                if (filaO.length === 3) casasElements[filaO[0]].style.opacity = "0.3";
+            } else {
+                estadoJogo[i] = simbolo;
+                casasElements[i].innerText = simbolo;
+                casasElements[i].style.color = simbolo === "X" ? "var(--ios-blue)" : "var(--ios-red)";
+            }
+            verificarFim();
+        }
+
+        function iaExecutar() {
+            let escolha;
+            if (modoOponente === 'ia-god') {
+                escolha = calcularMelhorJogada();
+            } else {
+                let livres = estadoJogo.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+                escolha = livres[Math.floor(Math.random() * livres.length)];
+            }
+            
+            if (escolha !== undefined) {
+                processarRodada(escolha, "O");
+                if (jogoAtivo) {
+                    turnoX = true; 
+                    document.getElementById("status").innerText = "Sua vez (X)";
+                }
+            }
+        }
+
+        function calcularMelhorJogada() {
+            if (estiloGlobal === 'tradicional') return minimax(estadoJogo, "O").index;
+            return heuristicaInfinito();
+        }
+
+        function minimax(tab, player) {
+            let livres = tab.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+            if (checarVitoria(tab, "X")) return {score: -10};
+            if (checarVitoria(tab, "O")) return {score: 10};
+            if (livres.length === 0) return {score: 0};
+
+            let jogadas = [];
+            for (let i = 0; i < livres.length; i++) {
+                let move = {index: livres[i]};
+                tab[livres[i]] = player;
+                move.score = minimax(tab, player === "O" ? "X" : "O").score;
+                tab[livres[i]] = "";
+                jogadas.push(move);
+            }
+
+            let melhor;
+            if (player === "O") {
+                let melhorScore = -Infinity;
+                jogadas.forEach((j, i) => { if (j.score > melhorScore) { melhorScore = j.score; melhor = i; } });
+            } else {
+                let melhorScore = Infinity;
+                jogadas.forEach((j, i) => { if (j.score < melhorScore) { melhorScore = j.score; melhor = i; } });
+            }
+            return jogadas[melhor];
+        }
+
+        function heuristicaInfinito() {
+            let futO = [...estadoJogo]; if (filaO.length === 3) futO[filaO[0]] = "";
+            for (let i = 0; i < 9; i++) if (futO[i] === "") { futO[i] = "O"; if (checarVitoria(futO, "O")) return i; futO[i] = ""; }
+            let futX = [...estadoJogo]; if (filaX.length === 3) futX[filaX[0]] = "";
+            for (let i = 0; i < 9; i++) if (futX[i] === "") { futX[i] = "X"; if (checarVitoria(futX, "X")) return i; futX[i] = ""; }
+            if (estadoJogo[4] === "") return 4;
+            let cantos = [0, 2, 6, 8].filter(c => estadoJogo[c] === "");
+            return cantos.length > 0 ? cantos[0] : estadoJogo.indexOf("");
+        }
+
+        function checarVitoria(tab, p) {
+            return vitoriaTab.some(c => tab[c[0]] === p && tab[c[1]] === p && tab[c[2]] === p);
+        }
+
+        function verificarFim() {
+            let venceu = "";
+            if (checarVitoria(estadoJogo, "X")) venceu = "X";
+            else if (checarVitoria(estadoJogo, "O")) venceu = "O";
+
+            if (venceu !== "") {
+                const lX = document.getElementById("label-x").innerText.split(" (")[0];
+                const lO = document.getElementById("label-o").innerText.split(" (")[0];
+                document.getElementById("status").innerText = `Vitória do ${venceu === "X" ? lX : lO}! 🎉`;
+                if (venceu === "X") vitoriasX++; else vitoriasO++;
+                finalizar();
+            } else if (!estadoJogo.includes("") && estiloGlobal === 'tradicional') {
+                document.getElementById("status").innerText = "Empate! 🤝";
+                empates++;
+                finalizar();
+            }
+        }
+
+        function finalizar() {
+            jogoAtivo = false;
+            document.getElementById("score-x-val").innerText = vitoriasX;
+            document.getElementById("score-o-val").innerText = vitoriasO;
+            document.getElementById("score-velha").innerText = empates;
+            document.getElementById("btn-novo-jogo").style.display = "block";
+        }
+
+        function reiniciar() {
+            estadoJogo = ["", "", "", "", "", "", "", "", ""];
+            filaX = []; filaO = [];
+            document.getElementById("btn-novo-jogo").style.display = "none";
+            casasElements.forEach(c => { c.innerText = ""; c.style.opacity = "1"; });
+            
+            turnoX = Math.random() < 0.5; 
+            jogoAtivo = true;
+
+            if (modoOponente === 'amigo') {
+                document.getElementById("status").innerText = `Sorteio: Começa o ${turnoX ? "Jogador 1" : "Jogador 2"}`;
+            } else {
+                if (!turnoX) {
+                    jogoAtivo = false;
+                    document.getElementById("status").innerText = "Sorteio: CPU começa...";
+                    setTimeout(iaExecutar, 800);
+                } else {
+                    document.getElementById("status").innerText = "Sorteio: Você começa! (X)";
+                }
+            }
+        }
+
+        function voltarAoMenu() {
+            vitoriasX = 0; vitoriasO = 0; empates = 0;
+            document.getElementById("score-x-val").innerText = 0;
+            document.getElementById("score-o-val").innerText = 0;
+            document.getElementById("score-velha").innerText = 0;
+            mudarTela("tela-jogo", "tela-inicial");
+        }
+    </script>
+</body>
+</html>
