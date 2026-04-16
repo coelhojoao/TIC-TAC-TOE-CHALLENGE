@@ -108,7 +108,6 @@
         .btn-reiniciar { background: var(--ios-green); color: white; display: none; }
         .btn-voltar { background: var(--ios-gray); color: white; }
 
-        /* ESTILO DOS CONFETES */
         .confete {
             position: absolute; width: 10px; height: 10px;
             z-index: 999; pointer-events: none;
@@ -169,6 +168,75 @@
     </div>
 
     <script>
+        // --- SISTEMA DE ÁUDIO REESCRITO (DESBLOQUEIO IOS) ---
+        let audioCtx = null;
+        let audioDesbloqueado = false;
+
+        // Função que inicializa o áudio apenas após o usuário tocar na tela
+        function destravarAudio() {
+            if (audioDesbloqueado) return;
+            
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return; // Navegador não suporta
+            
+            audioCtx = new AudioContext();
+            
+            // Cria um som mudo, toca e para imediatamente. Isso "destrava" o iOS.
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            gain.gain.value = 0; // Volume zero
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(0);
+            osc.stop(0.001);
+            
+            audioDesbloqueado = true;
+            
+            // Limpa os event listeners para não rodar de novo
+            document.removeEventListener('touchstart', destravarAudio);
+            document.removeEventListener('click', destravarAudio);
+        }
+
+        // Fica ouvindo o primeiro toque na tela do celular
+        document.addEventListener('touchstart', destravarAudio, { once: true });
+        document.addEventListener('click', destravarAudio, { once: true });
+
+        // Função base para tocar qualquer som
+        function tocarSom(frequencia, tipo = 'sine', duracao = 0.1, volume = 0.1) {
+            if (!audioDesbloqueado || !audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = tipo;
+            oscillator.frequency.setValueAtTime(frequencia, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duracao);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duracao);
+        }
+
+        function somClique(player) {
+            if (player === "X") tocarSom(400, 'sine', 0.1);
+            else tocarSom(300, 'sine', 0.1);
+        }
+
+        function somVitoria() {
+            tocarSom(523, 'triangle', 0.2); 
+            setTimeout(() => tocarSom(659, 'triangle', 0.2), 150);
+            setTimeout(() => tocarSom(783, 'triangle', 0.4), 300);
+        }
+
+        function somEmpate() {
+            tocarSom(200, 'sawtooth', 0.3, 0.05);
+        }
+
         // --- FUNÇÃO DE CONFETES ---
         function dispararConfetes() {
             const cores = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500'];
@@ -181,15 +249,12 @@
                 confete.style.width = Math.random() * 8 + 5 + 'px';
                 confete.style.height = confete.style.width;
                 confete.style.animationDuration = Math.random() * 2 + 2 + 's';
-                confete.style.opacity = Math.random();
                 document.body.appendChild(confete);
-                
-                // Remove o elemento após a animação para não pesar o navegador
                 setTimeout(() => confete.remove(), 4000);
             }
         }
 
-        // --- LÓGICA DE VISIBILIDADE ---
+        // --- LÓGICA DE TEMAS E VISIBILIDADE ---
         function gerenciarBotaoTema(telaAtiva) {
             const btn = document.getElementById('btn-alternar-tema');
             btn.style.display = (telaAtiva === 'tela-inicial') ? 'flex' : 'none';
@@ -209,6 +274,7 @@
             document.body.setAttribute('data-theme', tema.id);
             document.getElementById('tema-nome').innerText = tema.nome;
             document.getElementById('tema-icon').innerText = tema.icon;
+            tocarSom(600, 'sine', 0.05, 0.05); // Som ao trocar tema
         }
 
         function gerarTituloArqueado() {
@@ -230,6 +296,7 @@
         }
         gerarTituloArqueado();
 
+        // --- LÓGICA DO JOGO ---
         let estiloGlobal = ''; let modoOponente = ''; let turnoX = true; let jogoAtivo = true;
         let estadoJogo = ["", "", "", "", "", "", "", "", ""];
         let vitoriasX = 0, vitoriasO = 0, empates = 0;
@@ -247,6 +314,7 @@
             estiloGlobal = estilo;
             document.getElementById("txt-estilo").innerText = estilo === 'infinito' ? "♾ Infinito" : "⏹ Tradicional";
             mudarTela("tela-inicial", "tela-oponente");
+            tocarSom(500, 'sine', 0.1);
         }
 
         function iniciarJogo(oponente) {
@@ -267,6 +335,8 @@
 
         function executarJogada(i) {
             let simbolo = turnoX ? "X" : "O";
+            somClique(simbolo); // SOM DO CLIQUE
+
             if (estiloGlobal === 'infinito') {
                 let fila = (simbolo === "X") ? filaX : filaO;
                 if (fila.length === 3) {
@@ -358,7 +428,8 @@
                 document.getElementById("status").innerText = `Vitória de ${nome}! 🎉`;
                 if (turnoX) vitoriasX++; else vitoriasO++; 
                 finalizarRodada(); 
-                dispararConfetes(); // Ativa os confetes!
+                somVitoria(); // SOM DA VITÓRIA
+                dispararConfetes();
                 return true;
             } return false;
         }
@@ -367,7 +438,9 @@
             if (estiloGlobal === 'tradicional' && !estadoJogo.includes("")) {
                 jogoAtivo = false;
                 document.getElementById("status").innerText = "Empate! 🤝";
-                empates++; finalizarRodada(); return true;
+                empates++; finalizarRodada(); 
+                somEmpate(); // SOM DO EMPATE
+                return true;
             } return false;
         }
 
@@ -395,6 +468,7 @@
         function voltarAoMenu() {
             vitoriasX = 0; vitoriasO = 0; empates = 0; finalizarRodada();
             mudarTela("tela-jogo", "tela-inicial");
+            tocarSom(300, 'sine', 0.1);
         }
     </script>
 </body>
