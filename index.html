@@ -39,7 +39,6 @@
             color: var(--texto); transition: background-color 0.3s ease;
         }
         
-        /* BOTÃO CICLAR TEMA - CONTROLADO POR JS */
         #btn-alternar-tema {
             position: absolute; top: 20px; left: 20px;
             padding: 10px 15px; border-radius: 12px; border: none;
@@ -108,6 +107,17 @@
         button.controle { padding: 14px 24px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; }
         .btn-reiniciar { background: var(--ios-green); color: white; display: none; }
         .btn-voltar { background: var(--ios-gray); color: white; }
+
+        /* ESTILO DOS CONFETES */
+        .confete {
+            position: absolute; width: 10px; height: 10px;
+            z-index: 999; pointer-events: none;
+            animation: cair 3s ease-out forwards;
+        }
+        @keyframes cair {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
     </style>
 </head>
 <body data-theme="clássico">
@@ -159,13 +169,32 @@
     </div>
 
     <script>
-        // --- LÓGICA DE VISIBILIDADE DO BOTÃO DE TEMA ---
+        // --- FUNÇÃO DE CONFETES ---
+        function dispararConfetes() {
+            const cores = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500'];
+            for (let i = 0; i < 50; i++) {
+                const confete = document.createElement('div');
+                confete.className = 'confete';
+                confete.style.left = Math.random() * 100 + 'vw';
+                confete.style.backgroundColor = cores[Math.floor(Math.random() * cores.length)];
+                confete.style.top = '-10px';
+                confete.style.width = Math.random() * 8 + 5 + 'px';
+                confete.style.height = confete.style.width;
+                confete.style.animationDuration = Math.random() * 2 + 2 + 's';
+                confete.style.opacity = Math.random();
+                document.body.appendChild(confete);
+                
+                // Remove o elemento após a animação para não pesar o navegador
+                setTimeout(() => confete.remove(), 4000);
+            }
+        }
+
+        // --- LÓGICA DE VISIBILIDADE ---
         function gerenciarBotaoTema(telaAtiva) {
             const btn = document.getElementById('btn-alternar-tema');
             btn.style.display = (telaAtiva === 'tela-inicial') ? 'flex' : 'none';
         }
 
-        // --- LÓGICA DE TEMAS ---
         const temas = [
             { id: 'clássico', nome: 'Clássico', icon: '🎨' },
             { id: 'dark', nome: 'Dark', icon: '🌙' },
@@ -211,7 +240,7 @@
         function mudarTela(saindo, entrando) {
             document.getElementById(saindo).classList.remove("ativa");
             document.getElementById(entrando).classList.add("ativa");
-            gerenciarBotaoTema(entrando); // Atualiza visibilidade do botão
+            gerenciarBotaoTema(entrando);
         }
 
         function escolherEstilo(estilo) {
@@ -327,7 +356,10 @@
                 combo.forEach(indice => { casasElements[indice].classList.add("vencedora"); casasElements[indice].style.opacity = "1"; });
                 let nome = (modoOponente === 'amigo') ? (turnoX ? "Jogador 1" : "Jogador 2") : (turnoX ? "Você" : "CPU");
                 document.getElementById("status").innerText = `Vitória de ${nome}! 🎉`;
-                if (turnoX) vitoriasX++; else vitoriasO++; finalizarRodada(); return true;
+                if (turnoX) vitoriasX++; else vitoriasO++; 
+                finalizarRodada(); 
+                dispararConfetes(); // Ativa os confetes!
+                return true;
             } return false;
         }
 
