@@ -5,78 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tic Tac Toe Challenge</title>
     <style>
-        :root {
-            --ios-blue: #007AFF;
-            --ios-red: #FF3B30;
-            --ios-green: #34C759;
-            --ios-purple: #5856D6;
-            --ios-gray: #8e8e93;
-            --ios-bg: #f0f0f7;
-            --casa-size: 95px;
+        /* TEMAS */
+        body[data-theme="clássico"] {
+            --ios-blue: #007AFF; --ios-red: #FF3B30; --ios-green: #34C759;
+            --ios-purple: #5856D6; --ios-gray: #8e8e93; --ios-bg: #f0f0f7;
+            --casa-bg: #ffffff; --texto: #333333;
         }
+
+        body[data-theme="dark"] {
+            --ios-blue: #0A84FF; --ios-red: #FF453A; --ios-green: #32D74B;
+            --ios-purple: #BF5AF2; --ios-gray: #98989d; --ios-bg: #000000;
+            --casa-bg: #1c1c1e; --texto: #ffffff;
+        }
+
+        body[data-theme="cyberpunk"] {
+            --ios-blue: #00f3ff; --ios-red: #ff0055; --ios-green: #00ff41;
+            --ios-purple: #bc13fe; --ios-gray: #3d3d3d; --ios-bg: #0d0221;
+            --casa-bg: #1a1a2e; --texto: #00f3ff;
+        }
+
+        body[data-theme="nature"] {
+            --ios-blue: #4a7c59; --ios-red: #d68c45; --ios-green: #84a59d;
+            --ios-purple: #6b705c; --ios-gray: #a5a58d; --ios-bg: #fefae0;
+            --casa-bg: #faedcd; --texto: #4a7c59;
+        }
+
+        :root { --casa-size: 95px; }
 
         body { 
             font-family: -apple-system, system-ui, sans-serif; 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100vh; margin: 0; background-color: var(--ios-bg); overflow: hidden;
+            color: var(--texto); transition: background-color 0.3s ease;
         }
         
-        .tela { display: none; flex-direction: column; align-items: center; width: 100%; }
-        .ativa { display: flex; }
-
-        /* --- BOTÃO DE SOM --- */
-        #btn-som {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: white;
-            border: none;
-            border-radius: 50%;
-            width: 45px;
-            height: 45px;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* BOTÃO CICLAR TEMA - CONTROLADO POR JS */
+        #btn-alternar-tema {
+            position: absolute; top: 20px; left: 20px;
+            padding: 10px 15px; border-radius: 12px; border: none;
+            background: var(--casa-bg); color: var(--texto);
+            font-size: 0.9rem; font-weight: bold; z-index: 100;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            cursor: pointer;
-            z-index: 100;
+            cursor: pointer; display: flex; align-items: center; gap: 8px;
             -webkit-tap-highlight-color: transparent;
         }
 
-        .header-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 50px;
-        }
+        .tela { display: none; flex-direction: column; align-items: center; width: 100%; }
+        .ativa { display: flex; }
 
-        .arco-container {
-            position: relative;
-            width: 320px;
-            height: 90px;
-            display: flex;
-            justify-content: center;
-        }
+        .header-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 50px; }
+        .arco-container { position: relative; width: 320px; height: 90px; display: flex; justify-content: center; }
 
         .letra-curva {
-            position: absolute;
-            font-size: 2.1rem;
-            font-weight: 900;
-            color: var(--ios-blue);
-            transform-origin: bottom center;
-            height: 120px;
-            bottom: 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: absolute; font-size: 2.1rem; font-weight: 900;
+            color: var(--ios-blue); transform-origin: bottom center;
+            height: 120px; bottom: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .sub-titulo {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #48484a;
-            letter-spacing: 6px;
-            margin-top: 15px;
-            text-transform: uppercase;
+            font-size: 1.4rem; font-weight: 700; color: var(--ios-gray);
+            letter-spacing: 6px; margin-top: 15px; text-transform: uppercase;
         }
 
         .menu button {
@@ -90,50 +78,44 @@
 
         .placar {
             display: flex; justify-content: space-around; width: 330px;
-            background: #fff; padding: 15px 5px; border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; 
-            text-align: center;
+            background: var(--casa-bg); padding: 15px 5px; border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center;
         }
-        .pontos { flex: 1; }
-        .pontos span { font-size: 0.65rem; color: var(--ios-gray); text-transform: uppercase; font-weight: bold; display: block; min-height: 14px;}
-        .pontos b { font-size: 1.6rem; display: block; margin-top: 5px; color: #333; }
+        .pontos span { font-size: 0.65rem; color: var(--ios-gray); text-transform: uppercase; font-weight: bold; display: block; }
+        .pontos b { font-size: 1.6rem; display: block; margin-top: 5px; color: var(--texto); }
         #score-x-val { color: var(--ios-blue); }
         #score-o-val { color: var(--ios-red); }
 
-        .tabuleiro { 
-            display: grid; grid-template-columns: repeat(3, var(--casa-size)); 
-            grid-template-rows: repeat(3, var(--casa-size)); gap: 12px; 
-        }
+        .tabuleiro { display: grid; grid-template-columns: repeat(3, var(--casa-size)); gap: 12px; }
 
         .casa { 
-            width: var(--casa-size); height: var(--casa-size); background: #fff; border-radius: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; 
+            width: var(--casa-size); height: var(--casa-size); background: var(--casa-bg); border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; 
             align-items: center; justify-content: center; font-size: 2.8rem; 
             font-weight: bold; transition: 0.3s ease;
-            -webkit-tap-highlight-color: transparent;
         }
 
         .casa.vencedora {
             transform: scale(1.1);
-            box-shadow: 0 0 15px currentColor; 
+            box-shadow: 0 0 20px currentColor; 
             animation: pular 0.6s ease infinite alternate;
         }
 
-        @keyframes pular {
-            0% { transform: scale(1.1) translateY(0); }
-            100% { transform: scale(1.15) translateY(-5px); }
-        }
+        @keyframes pular { 0% { transform: scale(1.1) translateY(0); } 100% { transform: scale(1.15) translateY(-5px); } }
 
-        #status { margin: 15px 0; font-size: 1.1rem; font-weight: 600; color: #333; min-height: 1.5em; }
+        #status { margin: 15px 0; font-size: 1.1rem; font-weight: 600; color: var(--texto); min-height: 1.5em; }
         .acoes { display: flex; gap: 12px; margin-top: 10px; }
-        button.controle { padding: 14px 24px; font-size: 1rem; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; }
+        button.controle { padding: 14px 24px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; }
         .btn-reiniciar { background: var(--ios-green); color: white; display: none; }
         .btn-voltar { background: var(--ios-gray); color: white; }
     </style>
 </head>
-<body>
+<body data-theme="clássico">
 
-    <button id="btn-som" onclick="toggleSom()">🔇</button>
+    <button id="btn-alternar-tema" onclick="ciclarTema()">
+        <span id="tema-icon">🎨</span>
+        <span id="tema-nome">Clássico</span>
+    </button>
 
     <div id="tela-inicial" class="tela ativa menu">
         <div class="header-container">
@@ -177,61 +159,32 @@
     </div>
 
     <script>
-        // --- LÓGICA DE ÁUDIO COM BOTÃO ---
-        let somAtivo = false;
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        function toggleSom() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            somAtivo = !somAtivo;
-            const btn = document.getElementById("btn-som");
-            btn.innerText = somAtivo ? "🔊" : "🔇";
-            
-            // Toca um feedback de clique se ativou
-            if (somAtivo) playSound('click');
+        // --- LÓGICA DE VISIBILIDADE DO BOTÃO DE TEMA ---
+        function gerenciarBotaoTema(telaAtiva) {
+            const btn = document.getElementById('btn-alternar-tema');
+            btn.style.display = (telaAtiva === 'tela-inicial') ? 'flex' : 'none';
         }
 
-        function playSound(type) {
-            if (!somAtivo) return; // Se o som estiver desligado, não faz nada
+        // --- LÓGICA DE TEMAS ---
+        const temas = [
+            { id: 'clássico', nome: 'Clássico', icon: '🎨' },
+            { id: 'dark', nome: 'Dark', icon: '🌙' },
+            { id: 'cyberpunk', nome: 'Cyber', icon: '⚡' },
+            { id: 'nature', nome: 'Nature', icon: '🌿' }
+        ];
+        let temaAtualIndex = 0;
 
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            if (type === 'click') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'vitoria') {
-                const notas = [523.25, 659.25, 783.99];
-                notas.forEach((freq, i) => {
-                    const o = audioCtx.createOscillator();
-                    const g = audioCtx.createGain();
-                    o.type = 'triangle';
-                    o.connect(g); g.connect(audioCtx.destination);
-                    o.frequency.setValueAtTime(freq, audioCtx.currentTime + (i * 0.15));
-                    g.gain.setValueAtTime(0.08, audioCtx.currentTime + (i * 0.15));
-                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (i * 0.15) + 0.4);
-                    o.start(audioCtx.currentTime + (i * 0.15));
-                    o.stop(audioCtx.currentTime + (i * 0.15) + 0.4);
-                });
-            } else if (type === 'velha') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            }
+        function ciclarTema() {
+            temaAtualIndex = (temaAtualIndex + 1) % temas.length;
+            const tema = temas[temaAtualIndex];
+            document.body.setAttribute('data-theme', tema.id);
+            document.getElementById('tema-nome').innerText = tema.nome;
+            document.getElementById('tema-icon').innerText = tema.icon;
         }
 
-        // --- AS FUNÇÕES DO JOGO (GERAR TITULO, JOGAR, IA, ETC) CONTINUAM AS MESMAS ---
         function gerarTituloArqueado() {
             const container = document.getElementById('titulo-arqueado');
+            container.innerHTML = "";
             const texto = "TIC-TAC-TOE";
             const anguloTotal = 110;
             const caracteres = texto.split("");
@@ -258,12 +211,15 @@
         function mudarTela(saindo, entrando) {
             document.getElementById(saindo).classList.remove("ativa");
             document.getElementById(entrando).classList.add("ativa");
+            gerenciarBotaoTema(entrando); // Atualiza visibilidade do botão
         }
+
         function escolherEstilo(estilo) {
             estiloGlobal = estilo;
             document.getElementById("txt-estilo").innerText = estilo === 'infinito' ? "♾ Infinito" : "⏹ Tradicional";
             mudarTela("tela-inicial", "tela-oponente");
         }
+
         function iniciarJogo(oponente) {
             modoOponente = oponente;
             const lx = document.getElementById("label-x"); const lo = document.getElementById("label-o");
@@ -273,13 +229,14 @@
             mudarTela("tela-oponente", "tela-jogo");
             reiniciar();
         }
+
         function cliqueJogador(i) {
             if (!jogoAtivo || estadoJogo[i] !== "") return;
             if (modoOponente.startsWith('ia') && !turnoX) return;
             executarJogada(i);
         }
+
         function executarJogada(i) {
-            playSound('click');
             let simbolo = turnoX ? "X" : "O";
             if (estiloGlobal === 'infinito') {
                 let fila = (simbolo === "X") ? filaX : filaO;
@@ -302,6 +259,7 @@
             turnoX = !turnoX; atualizarStatus();
             if (!turnoX && modoOponente.startsWith('ia')) setTimeout(iaPensar, 600);
         }
+
         function iaPensar() {
             if (!jogoAtivo) return;
             let escolha;
@@ -314,6 +272,7 @@
             }
             if (escolha !== undefined) executarJogada(escolha);
         }
+
         function melhorJogadaInfinito() {
             function simular(tab, fO_sim, fX_sim, simbolo) {
                 let novoTab = [...tab];
@@ -337,6 +296,7 @@
             if (cantos.length > 0) return cantos[Math.floor(Math.random() * cantos.length)];
             return estadoJogo.map((v, i) => v === "" ? i : null).filter(v => v !== null)[0];
         }
+
         function minimax(tab, player) {
             let livres = tab.map((v, i) => v === "" ? i : null).filter(v => v !== null);
             if (checarVitoriaSimples(tab, "X")) return {score: -10};
@@ -356,35 +316,41 @@
             }
             return jogadas[melhor];
         }
+
         function checarVitoriaSimples(tab, p) { return vitoriaTab.some(c => tab[c[0]] === p && tab[c[1]] === p && tab[c[2]] === p); }
+
         function verificarVitoria() {
             let simbolo = turnoX ? "X" : "O";
             let combo = vitoriaTab.find(c => estadoJogo[c[0]] === simbolo && estadoJogo[c[1]] === simbolo && estadoJogo[c[2]] === simbolo);
             if (combo) {
-                jogoAtivo = false; playSound('vitoria');
+                jogoAtivo = false;
                 combo.forEach(indice => { casasElements[indice].classList.add("vencedora"); casasElements[indice].style.opacity = "1"; });
                 let nome = (modoOponente === 'amigo') ? (turnoX ? "Jogador 1" : "Jogador 2") : (turnoX ? "Você" : "CPU");
                 document.getElementById("status").innerText = `Vitória de ${nome}! 🎉`;
                 if (turnoX) vitoriasX++; else vitoriasO++; finalizarRodada(); return true;
             } return false;
         }
+
         function verificarEmpate() {
             if (estiloGlobal === 'tradicional' && !estadoJogo.includes("")) {
-                jogoAtivo = false; playSound('velha');
+                jogoAtivo = false;
                 document.getElementById("status").innerText = "Empate! 🤝";
                 empates++; finalizarRodada(); return true;
             } return false;
         }
+
         function atualizarStatus() {
             if (!jogoAtivo) return;
             document.getElementById("status").innerText = (modoOponente === 'amigo') ? `Vez do: ${turnoX ? "Jogador 1" : "Jogador 2"}` : (turnoX ? "Sua vez (X)" : "IA pensando...");
         }
+
         function finalizarRodada() {
             document.getElementById("score-x-val").innerText = vitoriasX;
             document.getElementById("score-o-val").innerText = vitoriasO;
             document.getElementById("score-velha").innerText = empates;
             document.getElementById("btn-novo-jogo").style.display = "block";
         }
+
         function reiniciar() {
             estadoJogo = ["", "", "", "", "", "", "", "", ""]; filaX = []; filaO = []; jogoAtivo = true;
             document.getElementById("btn-novo-jogo").style.display = "none";
@@ -393,6 +359,7 @@
             atualizarStatus();
             if (!turnoX && modoOponente.startsWith('ia')) setTimeout(iaPensar, 800);
         }
+
         function voltarAoMenu() {
             vitoriasX = 0; vitoriasO = 0; empates = 0; finalizarRodada();
             mudarTela("tela-jogo", "tela-inicial");
